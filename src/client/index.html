@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>证书链路径工作台</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <strong>证书链路径工作台</strong>
+    <span class="offline-badge" title="仅使用你导入的证书与信任锚">离线 · 不访问系统证书库 / 网络</span>
+  </div>
+  <div class="top-actions">
+    <button id="btn-build" class="primary">构建并枚举路径</button>
+  </div>
+</header>
+
+<div id="stale-banner" class="stale-banner hidden">
+  <span>⚠ 输入、信任锚、校验时间或策略已变更 —— 下方结果基于旧的策略 revision / 时间绑定，已标记为过期。</span>
+  <button id="btn-rebuild">重新构建</button>
+</div>
+
+<main class="layout">
+  <!-- ============== 左栏：输入 ============== -->
+  <aside class="col col-left">
+    <section class="card">
+      <h2>1 · 预置场景</h2>
+      <div id="scenario-list" class="scenario-list">加载中…</div>
+    </section>
+
+    <section class="card">
+      <h2>2 · 导入证书（DER / PEM）</h2>
+      <p class="hint">可多选本地文件，或粘贴 PEM / 连续多段 PEM / 裸 base64 DER。重复 DER 自动去重。</p>
+      <div class="row">
+        <label class="file-btn">选择证书文件
+          <input id="file-certs" type="file" accept=".pem,.crt,.cer,.der,application/x-x509-ca-cert" multiple hidden>
+        </label>
+        <span id="cert-file-info" class="muted"></span>
+      </div>
+      <textarea id="paste-certs" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" rows="4"></textarea>
+      <div class="row">
+        <button id="btn-add-paste">加入粘贴内容</button>
+        <button id="btn-clear-certs" class="ghost">清空证书</button>
+      </div>
+      <div class="inv" id="cert-inventory"></div>
+    </section>
+
+    <section class="card">
+      <h2>3 · 信任锚</h2>
+      <p class="hint">单独导入，或在下方证书列表里勾选自签名 CA。顺序即锚优先级（可上下调整）。</p>
+      <div class="row">
+        <label class="file-btn">选择锚文件
+          <input id="file-anchors" type="file" accept=".pem,.crt,.cer,.der" multiple hidden>
+        </label>
+      </div>
+      <ol id="anchor-list" class="anchor-list"><li class="muted">尚无信任锚</li></ol>
+    </section>
+
+    <section class="card">
+      <h2>4 · 目标证书</h2>
+      <select id="target-select"></select>
+    </section>
+  </aside>
+
+  <!-- ============== 中栏：路径结果 ============== -->
+  <section class="col col-main">
+    <section class="card controls-card">
+      <div class="control-block">
+        <label class="control-label">验证策略</label>
+        <div id="policy-list" class="policy-list"></div>
+      </div>
+      <div class="control-block">
+        <label class="control-label" for="verify-at">逻辑验证时间（绑定）</label>
+        <input id="verify-at" type="datetime-local" step="1">
+        <p class="hint" id="binding-info"></p>
+      </div>
+    </section>
+
+    <section id="result-summary" class="card hidden">
+      <h2>枚举结果</h2>
+      <div id="summary-body"></div>
+    </section>
+
+    <section id="paths-panel" class="hidden">
+      <h2 class="section-title">候选路径（按排序保留全部结果）</h2>
+      <div id="paths"></div>
+    </section>
+
+    <section id="empty-state" class="card empty-state">
+      <h2>尚未构建</h2>
+      <p>选择一个预置场景或导入本地证书与信任锚，然后点击「构建并枚举路径」。</p>
+    </section>
+  </section>
+
+  <!-- ============== 右栏：失败约束 / 证据 ============== -->
+  <aside class="col col-right">
+    <section class="card">
+      <h2>被拒绝的候选边</h2>
+      <p class="hint">名称可能匹配，但 AKI/密钥或签名不成立、或被策略否决的连接。</p>
+      <div id="rejected-list"><span class="muted">无</span></div>
+    </section>
+    <section class="card">
+      <h2>图例</h2>
+      <ul class="legend">
+        <li><span class="dot ok"></span> 检查通过 / 有效路径</li>
+        <li><span class="dot warn"></span> 警告（不阻断）</li>
+        <li><span class="dot bad"></span> 失败约束</li>
+        <li><span class="dot stale"></span> 旧 revision 结果（已过期）</li>
+      </ul>
+    </section>
+  </aside>
+</main>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
